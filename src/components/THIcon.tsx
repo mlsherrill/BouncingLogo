@@ -1,6 +1,6 @@
 
 import "../App.css";
-import { LOGO_HEIGHT, LOGO_WIDTH } from "../constants";
+import { TH_ICON } from "../constants";
 
 interface Props {
   width?: number;
@@ -11,9 +11,12 @@ interface Props {
   scale?: number;
 }
 
+const LOGO_WIDTH=48;
+const LOGO_HEIGHT=48;
+
 export const THIcon = ({ color, top = 0, left = 0, scale = 1 }: Props) => {
-  const scaledWidth = LOGO_WIDTH * scale;
-  const scaledHeight = LOGO_HEIGHT * scale;
+  const scaledWidth = TH_ICON.width * scale;
+  const scaledHeight = TH_ICON.height * scale;
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

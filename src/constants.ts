@@ -1,4 +1,10 @@
-const LOGO_WIDTH = 48;
-const LOGO_HEIGHT = 48;
 
-export { LOGO_WIDTH, LOGO_HEIGHT };
+const TH_ICON = {
+    width: 48,
+    height: 48,
+};
+const TP_ICON = {
+    width: 25,
+    height: 24,
+};
+export { TH_ICON, TP_ICON };

@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { LOGO_HEIGHT, LOGO_WIDTH } from "../constants";
 
 interface Collision {
   horizontal: number;
   vertical: number;
 }
 
-export const useDimensions = (scale: number) => {
+export const useDimensions = (scale: number, icon: {width: number, height: number}) => {
   const getRandomNumber = (min: number, max: number) => {
     return Math.floor(Math.random() * (max - min)) + min;
   };
@@ -22,8 +21,8 @@ export const useDimensions = (scale: number) => {
 
   const [color, setColor] = useState(getRandomColor());
 
-  const scaledWidth = LOGO_WIDTH * scale;
-  const scaledHeight = LOGO_HEIGHT * scale;
+  const scaledWidth = icon.width * scale;
+  const scaledHeight = icon.height * scale;
 
   const [collision, setCollision] = useState<Collision>({
     horizontal: window.innerWidth - scaledWidth,
