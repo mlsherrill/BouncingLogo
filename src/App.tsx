@@ -1,9 +1,9 @@
 import "./App.css";
 import { THIcon } from "./components/THIcon";
-import { useDimensions } from "./hooks/useDimensions";
-import { useQuery } from "./hooks/useQuery";
 import { TPIcon } from "./components/TPIcon";
 import { TH_ICON, TP_ICON } from "./constants";
+import { useDimensions } from "./hooks/useDimensions";
+import { useQuery } from "./hooks/useQuery";
 
 function App() {
   const query = useQuery();
