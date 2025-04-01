@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/BouncingLogo/static/css/main.14067df0.css",
-    "main.js": "/BouncingLogo/static/js/main.469db398.js",
+    "main.css": "/BouncingLogo/static/css/main.3a7fbe5e.css",
+    "main.js": "/BouncingLogo/static/js/main.e3472b85.js",
     "static/js/787.2d082b17.chunk.js": "/BouncingLogo/static/js/787.2d082b17.chunk.js",
     "index.html": "/BouncingLogo/index.html",
-    "main.14067df0.css.map": "/BouncingLogo/static/css/main.14067df0.css.map",
-    "main.469db398.js.map": "/BouncingLogo/static/js/main.469db398.js.map",
+    "main.3a7fbe5e.css.map": "/BouncingLogo/static/css/main.3a7fbe5e.css.map",
+    "main.e3472b85.js.map": "/BouncingLogo/static/js/main.e3472b85.js.map",
     "787.2d082b17.chunk.js.map": "/BouncingLogo/static/js/787.2d082b17.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.14067df0.css",
-    "static/js/main.469db398.js"
+    "static/css/main.3a7fbe5e.css",
+    "static/js/main.e3472b85.js"
   ]
 }
