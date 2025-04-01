@@ -8,5 +8,5 @@ export function useQuery() {
       query[key] = value;
     });
     return query;
-  }, [window.location.search]);
+  }, []);
 }

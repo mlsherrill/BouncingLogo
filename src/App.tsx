@@ -1,4 +1,3 @@
-
 import "./App.css";
 import { THIcon } from "./components/THIcon";
 import { useDimensions } from "./hooks/useDimensions";
