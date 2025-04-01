@@ -7,5 +7,9 @@
 
 .container {
   /* background-color: blueviolet; */
-  position: relative;
+  position: absolute;
+}
+
+body {
+  color: white;
 }

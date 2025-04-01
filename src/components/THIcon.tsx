@@ -1,4 +1,3 @@
-
 import "../App.css";
 import { TH_ICON } from "../constants";
 
@@ -9,18 +8,28 @@ interface Props {
   top?: number;
   left?: number;
   scale?: number;
+  debug?: boolean;
 }
 
-const LOGO_WIDTH=48;
-const LOGO_HEIGHT=48;
-
-export const THIcon = ({ color, top = 0, left = 0, scale = 1 }: Props) => {
+export const THIcon = ({
+  color,
+  top = 0,
+  left = 0,
+  scale = 1,
+  debug = false,
+}: Props) => {
   const scaledWidth = TH_ICON.width * scale;
   const scaledHeight = TH_ICON.height * scale;
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      style={{ width: scaledWidth, height: scaledHeight, top, left }}
+      style={{
+        width: scaledWidth,
+        height: scaledHeight,
+        top,
+        left,
+        border: debug ? "1px solid white" : "none",
+      }}
       className="container"
       viewBox="0 0 48 48"
     >

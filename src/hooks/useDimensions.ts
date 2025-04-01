@@ -1,11 +1,21 @@
+import { get } from "http";
 import { useEffect, useState } from "react";
 
-interface Collision {
+interface BorderCollision {
   horizontal: number;
   vertical: number;
 }
 
-export const useDimensions = (scale: number, icon: {width: number, height: number}) => {
+interface IconLocation {
+  top: number;
+  left: number;
+  bottom: number;
+  right: number;
+}
+
+export const useDimensions = (
+  icons: { width: number; height: number; scale: number }[]
+) => {
   const getRandomNumber = (min: number, max: number) => {
     return Math.floor(Math.random() * (max - min)) + min;
   };
@@ -16,58 +26,193 @@ export const useDimensions = (scale: number, icon: {width: number, height: numbe
     return `rgb(${red}, ${green}, ${blue})`;
   };
 
-  const [top, setTop] = useState(0);
-  const [left, setLeft] = useState(0);
-
-  const [color, setColor] = useState(getRandomColor());
-
-  const scaledWidth = icon.width * scale;
-  const scaledHeight = icon.height * scale;
-
-  const [collision, setCollision] = useState<Collision>({
-    horizontal: window.innerWidth - scaledWidth,
-    vertical: window.innerHeight - scaledHeight,
+  const [colors, setColors] = useState(() => {
+    const colors: string[] = [];
+    for (let i = 0; i < icons.length; i++) {
+      const color = getRandomColor();
+      colors.push(color);
+    }
+    return colors;
   });
 
-  const [topSpeed, setTopSpeed] = useState(1);
-  const [leftSpeed, setLeftSpeed] = useState(2);
-
-  const getDimensions = () => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-
-    setCollision({
-      horizontal: width - scaledWidth,
-      vertical: height - scaledHeight,
-    });
+  const getScaledWidths = () => {
+    const widths: number[] = [];
+    for (let i = 0; i < icons.length; i++) {
+      const scaledWidth = icons[i].width * icons[i].scale;
+      widths.push(scaledWidth);
+    }
+    return widths;
+  };
+  const getScaledHeights = () => {
+    const heights: number[] = [];
+    for (let i = 0; i < icons.length; i++) {
+      const scaledHeight = icons[i].height * icons[i].scale;
+      heights.push(scaledHeight);
+    }
+    return heights;
   };
 
-  const moveLogo = () => {
-    const newTop = top + topSpeed;
-    const newLeft = left + leftSpeed;
-    setTop(newTop);
-    setLeft(newLeft);
+  const scaledWidths = getScaledWidths();
+  const scaledHeights = getScaledHeights();
+  const getBorderCollisions = () => {
+    const borderCollisions: BorderCollision[] = [];
+    for (let i = 0; i < icons.length; i++) {
+      const borderCollision: BorderCollision = {
+        horizontal: window.innerWidth - scaledWidths[i],
+        vertical: window.innerHeight - scaledHeights[i],
+      };
+      borderCollisions.push(borderCollision);
+    }
+    return borderCollisions;
+  };
 
-    if (newTop >= collision.vertical) {
-      setTopSpeed(-topSpeed);
-      setColor(getRandomColor());
-      setTop(collision.vertical);
+  const [borderCollisions, setBorderCollisions] = useState(
+    getBorderCollisions()
+  );
+
+  const [tops, setTops] = useState(() => {
+    const tops: number[] = [];
+    for (let i = 0; i < icons.length; i++) {
+      tops.push(getRandomNumber(0, borderCollisions[i].vertical));
+    }
+    return tops;
+  });
+  const [lefts, setLefts] = useState(() => {
+    const lefts: number[] = [];
+    for (let i = 0; i < icons.length; i++) {
+      lefts.push(getRandomNumber(0, borderCollisions[i].horizontal));
+    }
+    return lefts;
+  });
+
+  const getRandomTopSpeed = () => {
+    const availableSpeeds = [-1, 1];
+    const index = Math.floor(Math.random() * availableSpeeds.length);
+    return availableSpeeds[index];
+  };
+
+  const getRandomLeftSpeed = () => {
+    const availableSpeeds = [-2, 2];
+    const index = Math.floor(Math.random() * availableSpeeds.length);
+    return availableSpeeds[index];
+  };
+  const [topSpeeds, setTopSpeeds] = useState(() => {
+    let topSpeeds: number[] = [];
+    for (let i = 0; i < icons.length; i++) {
+      topSpeeds.push(getRandomTopSpeed());
+    }
+    return topSpeeds;
+  });
+  const [leftSpeeds, setLeftSpeeds] = useState(() => {
+    let leftSpeeds: number[] = [];
+    for (let i = 0; i < icons.length; i++) {
+      leftSpeeds.push(getRandomLeftSpeed());
+    }
+    return leftSpeeds;
+  });
+  const getDimensions = () => {
+    setBorderCollisions(getBorderCollisions());
+  };
+
+  const moveLogos = () => {
+    const newTops = [...tops];
+    const newLefts = [...lefts];
+    const newTopSpeeds = [...topSpeeds];
+    const newLeftSpeeds = [...leftSpeeds];
+    const newColors = [...colors];
+    for (let i = 0; i < icons.length; i++) {
+      for (let j = 0; j < icons.length; j++) {
+        if (i === j) continue;
+        const { top, left, topSpeed, leftSpeed, color } = moveLogo(i);
+        newTops[i] = top;
+        newLefts[i] = left;
+        newTopSpeeds[i] = topSpeed;
+        newLeftSpeeds[i] = leftSpeed;
+        newColors[i] = color;
+
+        // Check for collision with other logos
+        const iconLocation: IconLocation = {
+          top: newTops[i],
+          left: newLefts[i],
+          bottom: newTops[i] + scaledHeights[i],
+          right: newLefts[i] + scaledWidths[i],
+        };
+        const otherIconLocation: IconLocation = {
+          top: newTops[j],
+          left: newLefts[j],
+          bottom: newTops[j] + scaledHeights[j],
+          right: newLefts[j] + scaledWidths[j],
+        };
+        if (
+          iconLocation.top < otherIconLocation.bottom &&
+          iconLocation.bottom > otherIconLocation.top &&
+          iconLocation.left < otherIconLocation.right &&
+          iconLocation.right > otherIconLocation.left
+        ) {
+          // determine the direction of the collision
+          const deltaX = iconLocation.left - otherIconLocation.left;
+          const deltaY = iconLocation.top - otherIconLocation.top;
+          const absDeltaX = Math.abs(deltaX);
+          const absDeltaY = Math.abs(deltaY);
+          const isVerticalCollision = absDeltaY > absDeltaX;
+          const isHorizontalCollision = absDeltaX > absDeltaY;
+          if (isVerticalCollision) {
+            newTopSpeeds[i] = -topSpeeds[i];
+            newTopSpeeds[j] = -topSpeeds[j];
+            newColors[i] = getRandomColor();
+            newColors[j] = getRandomColor();
+          }
+          if (isHorizontalCollision) {
+            newLeftSpeeds[i] = -leftSpeeds[i];
+            newLeftSpeeds[j] = -leftSpeeds[j];
+            newColors[i] = getRandomColor();
+            newColors[j] = getRandomColor();
+          }
+        }
+      }
+    }
+    setTops(newTops);
+    setLefts(newLefts);
+    setTopSpeeds(newTopSpeeds);
+    setLeftSpeeds(newLeftSpeeds);
+    setColors(newColors);
+  };
+
+  const moveLogo = (index: number) => {
+    let newTop = tops[index] + topSpeeds[index];
+    let newLeft = lefts[index] + leftSpeeds[index];
+    let topSpeed = topSpeeds[index];
+    let leftSpeed = leftSpeeds[index];
+    let newColor = colors[index];
+
+    if (newTop >= borderCollisions[index].vertical) {
+      topSpeed = -topSpeed;
+      newColor = getRandomColor();
+      newTop = borderCollisions[index].vertical;
     }
     if (newTop <= 0) {
-      setTopSpeed(-topSpeed);
-      setColor(getRandomColor());
-      setTop(0);
+      topSpeed = -topSpeed;
+      newColor = getRandomColor();
+      newTop = 0;
     }
-    if (newLeft >= collision.horizontal) {
-      setLeftSpeed(-leftSpeed);
-      setColor(getRandomColor());
-      setLeft(collision.horizontal);
+    if (newLeft >= borderCollisions[index].horizontal) {
+      leftSpeed = -leftSpeed;
+      newColor = getRandomColor();
+      newLeft = borderCollisions[index].horizontal;
     }
     if (newLeft <= 0) {
-      setLeftSpeed(-leftSpeed);
-      setColor(getRandomColor());
-      setLeft(0);
+      leftSpeed = -leftSpeed;
+      newColor = getRandomColor();
+      newLeft = 0;
     }
+
+    return {
+      top: newTop,
+      left: newLeft,
+      topSpeed: topSpeed,
+      leftSpeed: leftSpeed,
+      color: newColor,
+    };
   };
 
   useEffect(() => {
@@ -80,9 +225,9 @@ export const useDimensions = (scale: number, icon: {width: number, height: numbe
 
   useEffect(() => {
     setTimeout(() => {
-      moveLogo();
+      moveLogos();
     }, 16);
   });
 
-  return { color, top, left };
+  return { colors, tops, lefts, borderCollisions };
 };
