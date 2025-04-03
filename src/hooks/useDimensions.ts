@@ -14,8 +14,10 @@ interface IconLocation {
 }
 
 export const useDimensions = (
-  icons: { width: number; height: number; scale: number }[]
+  icons: { width: number; height: number; scale: number }[],
+  speedMultiplier: number
 ) => {
+  console.log("useDimensions", speedMultiplier);
   const getRandomNumber = (min: number, max: number) => {
     return Math.floor(Math.random() * (max - min)) + min;
   };
@@ -86,13 +88,13 @@ export const useDimensions = (
   });
 
   const getRandomTopSpeed = () => {
-    const availableSpeeds = [-1, 1];
+    const availableSpeeds = [-1 * speedMultiplier, 1 * speedMultiplier];
     const index = Math.floor(Math.random() * availableSpeeds.length);
     return availableSpeeds[index];
   };
 
   const getRandomLeftSpeed = () => {
-    const availableSpeeds = [-2, 2];
+    const availableSpeeds = [-2 * speedMultiplier, 2 * speedMultiplier];
     const index = Math.floor(Math.random() * availableSpeeds.length);
     return availableSpeeds[index];
   };

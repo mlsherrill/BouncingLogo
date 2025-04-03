@@ -7,7 +7,6 @@ interface Props {
   color?: string;
   top?: number;
   left?: number;
-  scale?: number;
   debug?: boolean;
 }
 
@@ -15,11 +14,10 @@ export const TPIcon = ({
   color,
   top = 0,
   left = 0,
-  scale = 2,
   debug = false,
 }: Props) => {
-  const scaledWidth = TP_ICON.width * scale;
-  const scaledHeight = TP_ICON.height * scale;
+  const scaledWidth = TP_ICON.width * TP_ICON.scale;
+  const scaledHeight = TP_ICON.height * TP_ICON.scale;
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
