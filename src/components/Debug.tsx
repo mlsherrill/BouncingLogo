@@ -16,16 +16,17 @@ export const Debug = ({ colors, borderCollisions, scaledWidths, scaledHeights, t
             <div className="debug-info">
                 {colors.map((color, index) => (
                     <div key={index} className="debug-item">
-                        <p>Icon {index + 1}</p>
-                        <p>Color: {color}</p>
-                        <p>Top: {tops[index]}</p>
-                        <p>Left: {lefts[index]}</p>
-                        <p>Width: {scaledWidths[index]}</p>
-                        <p>Height: {scaledHeights[index]}</p>
-                        <p>Border Collision Horizontal: {borderCollisions[index].horizontal}</p>
-                        <p>Border Collision Vertical: {borderCollisions[index].vertical}</p>
+                        <p>
+                            {`Icon ${index + 1} {${String(tops[index]).padStart(4, '0')}, ${String(lefts[index]).padStart(4, '0')}} Size: ${scaledWidths[index]}x${
+                                scaledHeights[index]
+                            } Color: ${color}`}
+                        </p>
                     </div>
                 ))}
+                <p>
+                    Border Collision Horizontal: {borderCollisions[0].horizontal} Border Collision Vertical:{' '}
+                    {borderCollisions[0].vertical}
+                </p>{' '}
             </div>
         </div>
     );

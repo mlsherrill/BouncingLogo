@@ -5,12 +5,14 @@ import { Debug } from './components/Debug';
 import { TH_ICON, TP_ICON } from './constants';
 import { useDimensions } from './hooks/useDimensions';
 import { useQuery } from './hooks/useQuery';
+import { ConfigMenu } from './components/ConfigMenu';
 
 function App() {
     const query = useQuery();
-    const showDebug = query.debug === 'true';
+    const [isDebugVisible, setIsDebugVisible] = useState(query.debug === 'true');
     const [speedMultiplier, setSpeedMultiplier] = useState(query.speed ? parseFloat(query.speed) : 1);
-    const numberOfIcons = query.number || query.n ? parseInt(query.number || query.n) : 1;
+    const [numberOfIcons, setNumberOfIcons] = useState(query.number || query.n ? parseInt(query.number || query.n) : 1);
+    const [isMenuVisible, setIsMenuVisible] = useState(false);
 
     const svgIcons = [TH_ICON, TP_ICON];
 
@@ -19,39 +21,60 @@ function App() {
             svgIcons.push(svgIcons[i % 2]);
         }
     }
-    const { colors, tops, lefts, borderCollisions, setIsPaused, moveLogos, setFullStopDebug } = useDimensions(
+    const { colors, positions, borderCollisions, setIsPaused, moveLogos, setFullStopDebug } = useDimensions(
         svgIcons,
         speedMultiplier,
-        showDebug
+        isDebugVisible
     );
 
     return (
         <div className="App">
+            <div
+                style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100px',
+                    minHeight: '100px',
+                    backgroundColor: isMenuVisible ? 'rgba(0, 0, 0, 0.5)' : 'transparent',
+                    zIndex: 10,
+                }}
+                onMouseEnter={() => setIsMenuVisible(true)}
+                onMouseLeave={() => setTimeout(() => setIsMenuVisible(false), 2000)}
+            >
+                {isMenuVisible && (
+                    <ConfigMenu
+                        setNumberOfIcons={setNumberOfIcons}
+                        setSpeedMultiplier={setSpeedMultiplier}
+                        setIsPaused={setIsPaused}
+                        setIsDebugVisible={setIsDebugVisible}
+                    />
+                )}
+            </div>
             {svgIcons.map((icon, index) => {
                 const IconComponent = icon.component;
 
                 return (
                     <IconComponent
                         color={colors[index]}
-                        top={tops[index]}
-                        left={lefts[index]}
-                        debug={showDebug}
+                        position={positions[index]}
+                        debug={isDebugVisible}
                         index={index}
                     />
                 );
             })}
 
-            {showDebug && (
+            {isDebugVisible && (
                 <Debug
                     colors={colors}
                     borderCollisions={borderCollisions}
                     scaledWidths={svgIcons.map(icon => icon.width * icon.scale)}
                     scaledHeights={svgIcons.map(icon => icon.height * icon.scale)}
-                    tops={tops}
-                    lefts={lefts}
+                    tops={positions.map(pos => pos.top)}
+                    lefts={positions.map(pos => pos.left)}
                 />
             )}
-            {showDebug && (
+            {isDebugVisible && (
                 <>
                     <button onClick={() => setSpeedMultiplier(prev => prev - 0.5)}>-Speed</button>
                     <button onClick={() => setSpeedMultiplier(prev => prev + 0.5)}>+Speed</button>

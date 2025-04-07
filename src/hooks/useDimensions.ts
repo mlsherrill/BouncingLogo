@@ -73,20 +73,50 @@ export const useDimensions = (
 
     const [borderCollisions, setBorderCollisions] = useState(getBorderCollisions());
 
-    const [tops, setTops] = useState(() => {
-        const tops: number[] = [];
+    const [positions, setPositions] = useState(() => {
+        const positions: { top: number; left: number }[] = [];
+
         for (let i = 0; i < icons.length; i++) {
-            tops.push(getRandomNumber(0, borderCollisions[i].vertical));
+            let isOverlapping;
+            let top: number;
+            let left: number;
+            do {
+                top = getRandomNumber(0, borderCollisions[i].vertical);
+                left = getRandomNumber(0, borderCollisions[i].horizontal);
+                isOverlapping = positions.some((existingPosition, index) => {
+                    const existingBottom = existingPosition.top + scaledHeights[index];
+                    const existingRight = existingPosition.left + scaledWidths[index];
+                    const newBottom = top + scaledHeights[i];
+                    const newRight = left + scaledWidths[i];
+
+                    return (
+                        top < existingBottom &&
+                        newBottom > existingPosition.top &&
+                        left < existingRight &&
+                        newRight > existingPosition.left
+                    );
+                });
+            } while (isOverlapping);
+
+            positions.push({ top, left });
         }
-        return tops;
+
+        return positions;
     });
-    const [lefts, setLefts] = useState(() => {
-        const lefts: number[] = [];
-        for (let i = 0; i < icons.length; i++) {
-            lefts.push(getRandomNumber(0, borderCollisions[i].horizontal));
-        }
-        return lefts;
-    });
+    // const [tops, setTops] = useState(() => {
+    //     const tops: number[] = [];
+    //     for (let i = 0; i < icons.length; i++) {
+    //         tops.push(getRandomNumber(0, borderCollisions[i].vertical));
+    //     }
+    //     return tops;
+    // });
+    // const [lefts, setLefts] = useState(() => {
+    //     const lefts: number[] = [];
+    //     for (let i = 0; i < icons.length; i++) {
+    //         lefts.push(getRandomNumber(0, borderCollisions[i].horizontal));
+    //     }
+    //     return lefts;
+    // });
 
     const getRandomTopSpeed = () => {
         const availableSpeeds = [-1 * speedMultiplier, 1 * speedMultiplier];
@@ -118,8 +148,7 @@ export const useDimensions = (
     };
 
     const moveLogos = () => {
-        const newTops = [...tops];
-        const newLefts = [...lefts];
+        const newPositions = [...positions];
         const newTopSpeeds = [...topSpeeds];
         const newLeftSpeeds = [...leftSpeeds];
         const newColors = [...colors];
@@ -127,32 +156,31 @@ export const useDimensions = (
         for (let i = 0; i < icons.length; i++) {
             const { top, left, topSpeed, leftSpeed, color } = moveLogo(
                 i,
-                newTops,
-                newLefts,
+                newPositions,
                 newTopSpeeds,
                 newLeftSpeeds,
                 newColors
             );
+            newPositions[i] = { top, left };
+
+            newTopSpeeds[i] = topSpeed;
+            newLeftSpeeds[i] = leftSpeed;
+            newColors[i] = color;
             for (let j = 0; j < icons.length; j++) {
                 if (i === j) continue;
-                newTops[i] = top;
-                newLefts[i] = left;
-                newTopSpeeds[i] = topSpeed;
-                newLeftSpeeds[i] = leftSpeed;
-                newColors[i] = color;
 
                 // Check for collision with other logos
                 const iconLocation: IconLocation = {
-                    top: newTops[i],
-                    left: newLefts[i],
-                    bottom: newTops[i] + scaledHeights[i],
-                    right: newLefts[i] + scaledWidths[i],
+                    top: newPositions[i].top,
+                    left: newPositions[i].left,
+                    bottom: newPositions[i].top + scaledHeights[i],
+                    right: newPositions[i].left + scaledWidths[i],
                 };
                 const otherIconLocation: IconLocation = {
-                    top: newTops[j],
-                    left: newLefts[j],
-                    bottom: newTops[j] + scaledHeights[j],
-                    right: newLefts[j] + scaledWidths[j],
+                    top: newPositions[j].top,
+                    left: newPositions[j].left,
+                    bottom: newPositions[j].top + scaledHeights[j],
+                    right: newPositions[j].left + scaledWidths[j],
                 };
                 if (
                     iconLocation.top < otherIconLocation.bottom &&
@@ -187,8 +215,7 @@ export const useDimensions = (
                 }
             }
         }
-        setTops(newTops);
-        setLefts(newLefts);
+        setPositions(newPositions);
         setTopSpeeds(newTopSpeeds);
         setLeftSpeeds(newLeftSpeeds);
         setColors(newColors);
@@ -196,14 +223,13 @@ export const useDimensions = (
 
     const moveLogo = (
         index: number,
-        newTops: number[],
-        newLefts: number[],
+        newPositions: { top: number; left: number }[],
         newTopSpeeds: number[],
         newLeftSpeeds: number[],
         newColors: string[]
     ) => {
-        let newTop = newTops[index] + newTopSpeeds[index];
-        let newLeft = newLefts[index] + newLeftSpeeds[index];
+        let newTop = newPositions[index].top + newTopSpeeds[index];
+        let newLeft = newPositions[index].left + newLeftSpeeds[index];
         let topSpeed = newTopSpeeds[index];
         let leftSpeed = newLeftSpeeds[index];
         let newColor = newColors[index];
@@ -259,8 +285,7 @@ export const useDimensions = (
 
     return {
         colors,
-        tops,
-        lefts,
+        positions,
         borderCollisions,
         setIsPaused,
         moveLogos,
