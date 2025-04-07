@@ -8,6 +8,7 @@ interface Props {
   top?: number;
   left?: number;
   debug?: boolean;
+  index?: number;
 }
 
 export const TPIcon = ({
@@ -15,6 +16,7 @@ export const TPIcon = ({
   top = 0,
   left = 0,
   debug = false,
+  index = 0,
 }: Props) => {
   const scaledWidth = TP_ICON.width * TP_ICON.scale;
   const scaledHeight = TP_ICON.height * TP_ICON.scale;
@@ -31,6 +33,18 @@ export const TPIcon = ({
       className="container"
       viewBox="0 0 25 24"
     >
+      {debug && (
+        <text
+          x="15%"
+          y="15%"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill="white"
+          fontSize="6"
+        >
+          {index}
+        </text>
+      )}
       <path
         fill-rule="evenodd"
         clip-rule="evenodd"
