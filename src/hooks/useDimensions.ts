@@ -83,6 +83,7 @@ export const useDimensions = (
             do {
                 top = getRandomNumber(0, borderCollisions[i].vertical);
                 left = getRandomNumber(0, borderCollisions[i].horizontal);
+                // eslint-disable-next-line no-loop-func
                 isOverlapping = positions.some((existingPosition, index) => {
                     const existingBottom = existingPosition.top + scaledHeights[index];
                     const existingRight = existingPosition.left + scaledWidths[index];
@@ -103,20 +104,6 @@ export const useDimensions = (
 
         return positions;
     });
-    // const [tops, setTops] = useState(() => {
-    //     const tops: number[] = [];
-    //     for (let i = 0; i < icons.length; i++) {
-    //         tops.push(getRandomNumber(0, borderCollisions[i].vertical));
-    //     }
-    //     return tops;
-    // });
-    // const [lefts, setLefts] = useState(() => {
-    //     const lefts: number[] = [];
-    //     for (let i = 0; i < icons.length; i++) {
-    //         lefts.push(getRandomNumber(0, borderCollisions[i].horizontal));
-    //     }
-    //     return lefts;
-    // });
 
     const getRandomTopSpeed = () => {
         const availableSpeeds = [-1 * speedMultiplier, 1 * speedMultiplier];
