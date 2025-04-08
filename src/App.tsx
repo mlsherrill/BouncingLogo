@@ -21,7 +21,7 @@ function App() {
             svgIcons.push(svgIcons[i % 2]);
         }
     }
-    const { colors, positions, borderCollisions, setIsPaused, moveLogos, setFullStopDebug } = useDimensions(
+    const { colors, positions, borderCollisions, setIsPaused, moveLogos, setShouldStopOnCollision } = useDimensions(
         svgIcons,
         speedMultiplier,
         isDebugVisible
@@ -34,7 +34,7 @@ function App() {
                     position: 'absolute',
                     top: 0,
                     left: 0,
-                    width: '100px',
+                    minWidth: '100px',
                     minHeight: '100px',
                     backgroundColor: isMenuVisible ? 'rgba(0, 0, 0, 0.5)' : 'transparent',
                     zIndex: 10,
@@ -44,6 +44,7 @@ function App() {
             >
                 {isMenuVisible && (
                     <ConfigMenu
+                        speedMultiplier={speedMultiplier}
                         setNumberOfIcons={setNumberOfIcons}
                         setSpeedMultiplier={setSpeedMultiplier}
                         setIsPaused={setIsPaused}
@@ -79,7 +80,7 @@ function App() {
                     <button onClick={() => setSpeedMultiplier(prev => prev - 0.5)}>-Speed</button>
                     <button onClick={() => setSpeedMultiplier(prev => prev + 0.5)}>+Speed</button>
                     <button onClick={() => setIsPaused(prev => !prev)}>Pause</button>
-                    <button onClick={() => setFullStopDebug(prev => !prev)}>Full Stop</button>
+                    <button onClick={() => setShouldStopOnCollision(prev => !prev)}>Full Stop</button>
                     <button onClick={moveLogos}>One Step</button>
                 </>
             )}

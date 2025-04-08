@@ -13,13 +13,22 @@ interface IconLocation {
     right: number;
 }
 
+interface Velocity {
+    topSpeed: number;
+    leftSpeed: number;
+}
+
+const DEFAULT_TOP_SPEED = 1;
+const DEFAULT_LEFT_SPEED = 2;
+
 export const useDimensions = (
     icons: { width: number; height: number; scale: number }[],
     speedMultiplier: number,
     debug: boolean = false
 ) => {
     const [isPaused, setIsPaused] = useState(false);
-    const [fullStopDebug, setFullStopDebug] = useState(false);
+    const [shouldStopOnCollision, setShouldStopOnCollision] = useState(false);
+    const [initialVelocities, setInitialVelocities] = useState<Velocity[]>([]);
 
     const getRandomNumber = (min: number, max: number) => {
         return Math.floor(Math.random() * (max - min)) + min;
@@ -105,30 +114,25 @@ export const useDimensions = (
         return positions;
     });
 
-    const getRandomTopSpeed = () => {
-        const availableSpeeds = [-1 * speedMultiplier, 1 * speedMultiplier];
-        const index = Math.floor(Math.random() * availableSpeeds.length);
-        return availableSpeeds[index];
+    const getRandomVelocity = () => {
+        const availableTopSpeeds = [-DEFAULT_TOP_SPEED * speedMultiplier, DEFAULT_TOP_SPEED * speedMultiplier];
+        const availableLeftSpeeds = [-DEFAULT_LEFT_SPEED * speedMultiplier, DEFAULT_LEFT_SPEED * speedMultiplier];
+        const topSpeedIndex = Math.floor(Math.random() * availableTopSpeeds.length);
+        const leftSpeedIndex = Math.floor(Math.random() * availableLeftSpeeds.length);
+        return {
+            topSpeed: availableTopSpeeds[topSpeedIndex],
+            leftSpeed: availableLeftSpeeds[leftSpeedIndex],
+        };
     };
 
-    const getRandomLeftSpeed = () => {
-        const availableSpeeds = [-2 * speedMultiplier, 2 * speedMultiplier];
-        const index = Math.floor(Math.random() * availableSpeeds.length);
-        return availableSpeeds[index];
-    };
-    const [topSpeeds, setTopSpeeds] = useState(() => {
-        let topSpeeds: number[] = [];
+    const [velocities, setVelocities] = useState(() => {
+        const velocities: Velocity[] = [];
         for (let i = 0; i < icons.length; i++) {
-            topSpeeds.push(getRandomTopSpeed());
+            velocities.push(getRandomVelocity());
         }
-        return topSpeeds;
-    });
-    const [leftSpeeds, setLeftSpeeds] = useState(() => {
-        let leftSpeeds: number[] = [];
-        for (let i = 0; i < icons.length; i++) {
-            leftSpeeds.push(getRandomLeftSpeed());
-        }
-        return leftSpeeds;
+
+        setInitialVelocities(velocities);
+        return velocities;
     });
     const getDimensions = () => {
         setBorderCollisions(getBorderCollisions());
@@ -136,22 +140,15 @@ export const useDimensions = (
 
     const moveLogos = () => {
         const newPositions = [...positions];
-        const newTopSpeeds = [...topSpeeds];
-        const newLeftSpeeds = [...leftSpeeds];
+        const newVelocities = [...velocities];
         const newColors = [...colors];
         const hasChangedColor = Array(icons.length).fill(false);
         for (let i = 0; i < icons.length; i++) {
-            const { top, left, topSpeed, leftSpeed, color } = moveLogo(
-                i,
-                newPositions,
-                newTopSpeeds,
-                newLeftSpeeds,
-                newColors
-            );
+            const { top, left, topSpeed, leftSpeed, color } = moveLogo(i, newPositions, newVelocities, newColors);
             newPositions[i] = { top, left };
 
-            newTopSpeeds[i] = topSpeed;
-            newLeftSpeeds[i] = leftSpeed;
+            newVelocities[i].topSpeed = topSpeed;
+            newVelocities[i].leftSpeed = leftSpeed;
             newColors[i] = color;
             for (let j = 0; j < icons.length; j++) {
                 if (i === j) continue;
@@ -175,25 +172,26 @@ export const useDimensions = (
                     iconLocation.left < otherIconLocation.right &&
                     iconLocation.right > otherIconLocation.left
                 ) {
-                    if (fullStopDebug) debugger;
+                    if (shouldStopOnCollision) debugger;
 
                     const deltaX = iconLocation.left - otherIconLocation.left;
                     const deltaY = iconLocation.top - otherIconLocation.top;
                     const absDeltaX = Math.abs(deltaX);
                     const absDeltaY = Math.abs(deltaY);
+
                     const isVerticalCollision = absDeltaY > absDeltaX;
                     const isHorizontalCollision = absDeltaX > absDeltaY;
+                    const shouldColorChange = isHorizontalCollision || isVerticalCollision;
+
                     if (isVerticalCollision) {
-                        newTopSpeeds[i] = -topSpeeds[i];
-                        newTopSpeeds[j] = -topSpeeds[j];
-                        newColors[i] = !hasChangedColor[i] ? getRandomColor() : newColors[i];
-                        newColors[j] = !hasChangedColor[j] ? getRandomColor() : newColors[j];
-                        hasChangedColor[i] = true;
-                        hasChangedColor[j] = true;
+                        newVelocities[i].topSpeed = -newVelocities[i].topSpeed;
+                        newVelocities[j].topSpeed = -newVelocities[j].topSpeed;
                     }
                     if (isHorizontalCollision) {
-                        newLeftSpeeds[i] = -leftSpeeds[i];
-                        newLeftSpeeds[j] = -leftSpeeds[j];
+                        newVelocities[i].leftSpeed = -newVelocities[i].leftSpeed;
+                        newVelocities[j].leftSpeed = -newVelocities[j].leftSpeed;
+                    }
+                    if (shouldColorChange) {
                         newColors[i] = !hasChangedColor[i] ? getRandomColor() : newColors[i];
                         newColors[j] = !hasChangedColor[j] ? getRandomColor() : newColors[j];
                         hasChangedColor[i] = true;
@@ -203,22 +201,20 @@ export const useDimensions = (
             }
         }
         setPositions(newPositions);
-        setTopSpeeds(newTopSpeeds);
-        setLeftSpeeds(newLeftSpeeds);
+        setVelocities(newVelocities);
         setColors(newColors);
     };
 
     const moveLogo = (
         index: number,
         newPositions: { top: number; left: number }[],
-        newTopSpeeds: number[],
-        newLeftSpeeds: number[],
+        newVelocities: Velocity[],
         newColors: string[]
     ) => {
-        let newTop = newPositions[index].top + newTopSpeeds[index];
-        let newLeft = newPositions[index].left + newLeftSpeeds[index];
-        let topSpeed = newTopSpeeds[index];
-        let leftSpeed = newLeftSpeeds[index];
+        let newTop = newPositions[index].top + newVelocities[index].topSpeed;
+        let newLeft = newPositions[index].left + newVelocities[index].leftSpeed;
+        let topSpeed = newVelocities[index].topSpeed;
+        let leftSpeed = newVelocities[index].leftSpeed;
         let newColor = newColors[index];
 
         if (newTop >= borderCollisions[index].vertical) {
@@ -270,12 +266,46 @@ export const useDimensions = (
         };
     }, [isPaused, moveLogos]);
 
+    useEffect(() => {
+        console.log('Speed multiplier updated:', speedMultiplier);
+        setVelocities(() => {
+            const newVelocities: Velocity[] = [];
+
+            for (let i = 0; i < icons.length; i++) {
+                const currentVelocity = velocities[i];
+                const isCurrentTopSpeedNegative = currentVelocity.topSpeed < 0;
+                const isCurrentLeftSpeedNegative = currentVelocity.leftSpeed < 0;
+
+                let newTopSpeed = initialVelocities[i].topSpeed * speedMultiplier;
+                let newLeftSpeed = initialVelocities[i].leftSpeed * speedMultiplier;
+
+                if (isCurrentTopSpeedNegative) {
+                    newTopSpeed = -Math.abs(newTopSpeed);
+                } else {
+                    newTopSpeed = Math.abs(newTopSpeed);
+                }
+
+                if (isCurrentLeftSpeedNegative) {
+                    newLeftSpeed = -Math.abs(newLeftSpeed);
+                } else {
+                    newLeftSpeed = Math.abs(newLeftSpeed);
+                }
+
+                newVelocities.push({
+                    topSpeed: newTopSpeed,
+                    leftSpeed: newLeftSpeed,
+                });
+            }
+            return newVelocities;
+        });
+    }, [speedMultiplier]);
+
     return {
         colors,
         positions,
         borderCollisions,
         setIsPaused,
         moveLogos,
-        setFullStopDebug,
+        setShouldStopOnCollision,
     };
 };
