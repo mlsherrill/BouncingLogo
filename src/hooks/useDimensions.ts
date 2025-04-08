@@ -272,24 +272,9 @@ export const useDimensions = (
             const newVelocities: Velocity[] = [];
 
             for (let i = 0; i < icons.length; i++) {
-                const currentVelocity = velocities[i];
-                const isCurrentTopSpeedNegative = currentVelocity.topSpeed < 0;
-                const isCurrentLeftSpeedNegative = currentVelocity.leftSpeed < 0;
-
-                let newTopSpeed = initialVelocities[i].topSpeed * speedMultiplier;
-                let newLeftSpeed = initialVelocities[i].leftSpeed * speedMultiplier;
-
-                if (isCurrentTopSpeedNegative) {
-                    newTopSpeed = -Math.abs(newTopSpeed);
-                } else {
-                    newTopSpeed = Math.abs(newTopSpeed);
-                }
-
-                if (isCurrentLeftSpeedNegative) {
-                    newLeftSpeed = -Math.abs(newLeftSpeed);
-                } else {
-                    newLeftSpeed = Math.abs(newLeftSpeed);
-                }
+                const { topSpeed: initialTopSpeed, leftSpeed: initialLeftSpeed } = initialVelocities[i];
+                const newTopSpeed = Math.abs(initialTopSpeed * speedMultiplier) * Math.sign(velocities[i].topSpeed);
+                const newLeftSpeed = Math.abs(initialLeftSpeed * speedMultiplier) * Math.sign(velocities[i].leftSpeed);
 
                 newVelocities.push({
                     topSpeed: newTopSpeed,
