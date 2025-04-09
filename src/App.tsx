@@ -14,13 +14,14 @@ function App() {
     const [numberOfIcons, setNumberOfIcons] = useState(query.number || query.n ? parseInt(query.number || query.n) : 1);
     const [isMenuVisible, setIsMenuVisible] = useState(false);
 
-    const svgIcons = [TH_ICON, TP_ICON];
-
-    if (numberOfIcons > 2) {
-        for (let i = 2; i < numberOfIcons; i++) {
-            svgIcons.push(svgIcons[i % 2]);
+    const [svgIcons, setSvgIcons] = useState(() => {
+        const newSvgIcons = [];
+        for (let i = 0; i < numberOfIcons; i++) {
+            newSvgIcons.push(i % 2 === 0 ? TH_ICON : TP_ICON);
         }
-    }
+        return newSvgIcons;
+    });
+
     const { colors, positions, borderCollisions, setIsPaused, moveLogos, setShouldStopOnCollision } = useDimensions(
         svgIcons,
         speedMultiplier,
@@ -45,6 +46,7 @@ function App() {
                 {isMenuVisible && (
                     <ConfigMenu
                         speedMultiplier={speedMultiplier}
+                        numberOfIcons={numberOfIcons}
                         setNumberOfIcons={setNumberOfIcons}
                         setSpeedMultiplier={setSpeedMultiplier}
                         setIsPaused={setIsPaused}
@@ -57,6 +59,7 @@ function App() {
 
                 return (
                     <IconComponent
+                        key={index}
                         color={colors[index]}
                         position={positions[index]}
                         debug={isDebugVisible}
@@ -77,10 +80,8 @@ function App() {
             )}
             {isDebugVisible && (
                 <>
-                    <button onClick={() => setSpeedMultiplier(prev => prev - 0.5)}>-Speed</button>
-                    <button onClick={() => setSpeedMultiplier(prev => prev + 0.5)}>+Speed</button>
                     <button onClick={() => setIsPaused(prev => !prev)}>Pause</button>
-                    <button onClick={() => setShouldStopOnCollision(prev => !prev)}>Full Stop</button>
+                    <button onClick={() => setShouldStopOnCollision(prev => !prev)}>Stop On Collision</button>
                     <button onClick={moveLogos}>One Step</button>
                 </>
             )}

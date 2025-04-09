@@ -6,17 +6,56 @@ interface BorderCollision {
     vertical: number;
 }
 
-interface IconLocation {
+class IconLocation {
     top: number;
     left: number;
     bottom: number;
     right: number;
+
+    constructor(top: number, left: number, heigth: number, width: number) {
+        this.top = top;
+        this.left = left;
+        this.bottom = top + heigth;
+        this.right = left + width;
+    }
+
+    getHorizontalCollisionSide(otherIconLocation: IconLocation): string {
+        const leftToRightDistance = Math.abs(this.left - otherIconLocation.right);
+        const rightToLeftDistance = Math.abs(otherIconLocation.left - this.right);
+
+        if (rightToLeftDistance < leftToRightDistance) {
+            return 'right';
+        }
+
+        return 'left';
+    }
+    getVerticalCollisionSide(otherIconLocation: IconLocation): string {
+        const topToBottomDistance = Math.abs(this.top - otherIconLocation.bottom);
+        const bottomToTopDistance = Math.abs(otherIconLocation.top - this.bottom);
+
+        if (bottomToTopDistance < topToBottomDistance) {
+            return 'bottom';
+        }
+
+        return 'top';
+    }
 }
 
 interface Velocity {
     topSpeed: number;
     leftSpeed: number;
 }
+
+type CollisionLog = {
+    [key: string]: {
+        IconLocation1: IconLocation;
+        IconVelocity1: Velocity;
+        IconLocation2: IconLocation;
+        IconVelocity2: Velocity;
+        CollisionType: string;
+        CollisionFrame: number;
+    }[];
+};
 
 const DEFAULT_TOP_SPEED = 1;
 const DEFAULT_LEFT_SPEED = 2;
@@ -26,9 +65,11 @@ export const useDimensions = (
     speedMultiplier: number,
     debug: boolean = false
 ) => {
+    const [frameCount, setFrameCount] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
     const [shouldStopOnCollision, setShouldStopOnCollision] = useState(false);
     const [initialVelocities, setInitialVelocities] = useState<Velocity[]>([]);
+    const [iconCollisions, setIconCollisions] = useState<CollisionLog>({});
 
     const getRandomNumber = (min: number, max: number) => {
         return Math.floor(Math.random() * (max - min)) + min;
@@ -153,25 +194,26 @@ export const useDimensions = (
             for (let j = 0; j < icons.length; j++) {
                 if (i === j) continue;
 
-                // Check for collision with other logos
-                const iconLocation: IconLocation = {
-                    top: newPositions[i].top,
-                    left: newPositions[i].left,
-                    bottom: newPositions[i].top + scaledHeights[i],
-                    right: newPositions[i].left + scaledWidths[i],
-                };
-                const otherIconLocation: IconLocation = {
-                    top: newPositions[j].top,
-                    left: newPositions[j].left,
-                    bottom: newPositions[j].top + scaledHeights[j],
-                    right: newPositions[j].left + scaledWidths[j],
-                };
-                if (
+                const iconLocation: IconLocation = new IconLocation(
+                    newPositions[i].top,
+                    newPositions[i].left,
+                    scaledHeights[i],
+                    scaledWidths[i]
+                );
+                const otherIconLocation: IconLocation = new IconLocation(
+                    newPositions[j].top,
+                    newPositions[j].left,
+                    scaledHeights[j],
+                    scaledWidths[j]
+                );
+
+                const isCollision =
                     iconLocation.top < otherIconLocation.bottom &&
                     iconLocation.bottom > otherIconLocation.top &&
                     iconLocation.left < otherIconLocation.right &&
-                    iconLocation.right > otherIconLocation.left
-                ) {
+                    iconLocation.right > otherIconLocation.left;
+
+                if (isCollision) {
                     if (shouldStopOnCollision) debugger;
 
                     const deltaX = iconLocation.left - otherIconLocation.left;
@@ -183,13 +225,67 @@ export const useDimensions = (
                     const isHorizontalCollision = absDeltaX > absDeltaY;
                     const shouldColorChange = isHorizontalCollision || isVerticalCollision;
 
+                    setIconCollisions(prev => {
+                        const newIconCollisions = { ...prev };
+                        const collisionKey = `${Math.min(i, j)}-${Math.max(i, j)}`;
+                        const lowerIndex = Math.min(i, j);
+
+                        if (!newIconCollisions[collisionKey]) {
+                            newIconCollisions[collisionKey] = [];
+                        }
+
+                        let iconLocation1: IconLocation;
+                        let iconLocation2: IconLocation;
+                        let iconVelocity1: Velocity;
+                        let iconVelocity2: Velocity;
+                        if (lowerIndex === i) {
+                            iconLocation1 = iconLocation;
+                            iconLocation2 = otherIconLocation;
+                            iconVelocity1 = newVelocities[i];
+                            iconVelocity2 = newVelocities[j];
+                        } else {
+                            iconLocation1 = otherIconLocation;
+                            iconLocation2 = iconLocation;
+                            iconVelocity1 = newVelocities[j];
+                            iconVelocity2 = newVelocities[i];
+                        }
+
+                        newIconCollisions[collisionKey].push({
+                            IconLocation1: iconLocation1,
+                            IconVelocity1: iconVelocity1,
+                            IconLocation2: iconLocation2,
+                            IconVelocity2: iconVelocity2,
+                            CollisionType: isVerticalCollision ? 'Vertical' : 'Horizontal',
+                            CollisionFrame: frameCount,
+                        });
+                        return newIconCollisions;
+                    });
+
                     if (isVerticalCollision) {
                         newVelocities[i].topSpeed = -newVelocities[i].topSpeed;
                         newVelocities[j].topSpeed = -newVelocities[j].topSpeed;
+                        const sideOfCollision = iconLocation.getVerticalCollisionSide(otherIconLocation);
+                        if (sideOfCollision === 'bottom') {
+                            newPositions[i].top = otherIconLocation.top - scaledHeights[i];
+                        } else {
+                            newPositions[i].top = otherIconLocation.bottom;
+                        }
+                        if (Math.sign(newVelocities[i].topSpeed) === Math.sign(newVelocities[j].topSpeed)) {
+                            newVelocities[j].topSpeed = -newVelocities[j].topSpeed;
+                        }
                     }
                     if (isHorizontalCollision) {
                         newVelocities[i].leftSpeed = -newVelocities[i].leftSpeed;
                         newVelocities[j].leftSpeed = -newVelocities[j].leftSpeed;
+                        const sideOfCollision = iconLocation.getHorizontalCollisionSide(otherIconLocation);
+                        if (sideOfCollision === 'right') {
+                            newPositions[i].left = otherIconLocation.left - scaledWidths[i];
+                        } else {
+                            newPositions[i].left = otherIconLocation.right;
+                        }
+                        if (Math.sign(newVelocities[i].leftSpeed) === Math.sign(newVelocities[j].leftSpeed)) {
+                            newVelocities[j].leftSpeed = -newVelocities[j].leftSpeed;
+                        }
                     }
                     if (shouldColorChange) {
                         newColors[i] = !hasChangedColor[i] ? getRandomColor() : newColors[i];
@@ -258,6 +354,7 @@ export const useDimensions = (
     useEffect(() => {
         const timeout = setTimeout(() => {
             if (isPaused) return;
+            setFrameCount(prevFrameCount => prevFrameCount + 1);
             moveLogos();
         }, 16);
 
@@ -284,6 +381,42 @@ export const useDimensions = (
             return newVelocities;
         });
     }, [speedMultiplier]);
+
+    useEffect(() => {
+        for (const key in iconCollisions) {
+            const collisionData = iconCollisions[key];
+            if (collisionData.length > 10) {
+                console.log(`More than 10 collisions detected between icons ${key}:`, collisionData);
+            }
+        }
+    }, [iconCollisions]);
+
+    useEffect(() => {
+        if (frameCount % 120 === 0) {
+            setIconCollisions({});
+            return;
+        }
+    }, [frameCount]);
+
+    useEffect(() => {
+        if (icons.length < colors.length) {
+            const newColors = [...colors];
+            const newPositions = [...positions];
+            const newVelocities = [...velocities];
+            const newBorderCollisions = [...borderCollisions];
+            const newInitialVelocities = [...initialVelocities];
+            newColors.splice(icons.length);
+            newVelocities.splice(icons.length);
+            newPositions.splice(icons.length);
+            newBorderCollisions.splice(icons.length);
+            newInitialVelocities.splice(icons.length);
+            setVelocities(newVelocities);
+            setPositions(newPositions);
+            setBorderCollisions(newBorderCollisions);
+            setInitialVelocities(newInitialVelocities);
+            setColors(newColors);
+        }
+    }, [icons]);
 
     return {
         colors,
