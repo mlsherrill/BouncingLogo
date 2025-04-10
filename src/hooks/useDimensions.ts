@@ -1,10 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react';
-
-interface BorderCollision {
-    horizontal: number;
-    vertical: number;
-}
+import { BorderCollision } from '../types';
 
 class IconLocation {
     top: number;
@@ -12,10 +8,10 @@ class IconLocation {
     bottom: number;
     right: number;
 
-    constructor(top: number, left: number, heigth: number, width: number) {
+    constructor(top: number, left: number, height: number, width: number) {
         this.top = top;
         this.left = left;
-        this.bottom = top + heigth;
+        this.bottom = top + height;
         this.right = left + width;
     }
 
@@ -46,15 +42,17 @@ interface Velocity {
     leftSpeed: number;
 }
 
+type Collision = {
+    IconLocation1: IconLocation;
+    IconVelocity1: Velocity;
+    IconLocation2: IconLocation;
+    IconVelocity2: Velocity;
+    CollisionType: string;
+    CollisionFrame: number;
+};
+
 type CollisionLog = {
-    [key: string]: {
-        IconLocation1: IconLocation;
-        IconVelocity1: Velocity;
-        IconLocation2: IconLocation;
-        IconVelocity2: Velocity;
-        CollisionType: string;
-        CollisionFrame: number;
-    }[];
+    [key: string]: Collision[];
 };
 
 const DEFAULT_TOP_SPEED = 1;
@@ -113,8 +111,10 @@ export const useDimensions = (
         const borderCollisions: BorderCollision[] = [];
         for (let i = 0; i < icons.length; i++) {
             const borderCollision: BorderCollision = {
-                horizontal: window.innerWidth - scaledWidths[i],
-                vertical: window.innerHeight - scaledHeights[i],
+                top: 0,
+                left: 0,
+                right: window.innerWidth - scaledWidths[i],
+                bottom: window.innerHeight - scaledHeights[i],
             };
             borderCollisions.push(borderCollision);
         }
@@ -127,12 +127,12 @@ export const useDimensions = (
         const positions: { top: number; left: number }[] = [];
 
         for (let i = 0; i < icons.length; i++) {
-            let isOverlapping;
+            let isOverlapping: boolean;
             let top: number;
             let left: number;
             do {
-                top = getRandomNumber(0, borderCollisions[i].vertical);
-                left = getRandomNumber(0, borderCollisions[i].horizontal);
+                top = getRandomNumber(0, borderCollisions[i].bottom);
+                left = getRandomNumber(0, borderCollisions[i].right);
                 // eslint-disable-next-line no-loop-func
                 isOverlapping = positions.some((existingPosition, index) => {
                     const existingBottom = existingPosition.top + scaledHeights[index];
@@ -175,6 +175,49 @@ export const useDimensions = (
         setInitialVelocities(velocities);
         return velocities;
     });
+
+    const addIcon = () => {
+        const newBorderCollisions = getBorderCollisions();
+        setBorderCollisions(newBorderCollisions);
+        const newIndex = icons.length - 1;
+        let top: number;
+        let left: number;
+        let isOverlapping;
+        do {
+            top = getRandomNumber(0, newBorderCollisions[newIndex].bottom);
+            left = getRandomNumber(0, newBorderCollisions[newIndex].right);
+            console.log('adding new icon at', top, left);
+            // eslint-disable-next-line no-loop-func
+            isOverlapping = positions.some((existingPosition, index) => {
+                const existingBottom = existingPosition.top + scaledHeights[index];
+                const existingRight = existingPosition.left + scaledWidths[index];
+                const newBottom = top + scaledHeights[newIndex];
+                const newRight = left + scaledWidths[newIndex];
+
+                return (
+                    top < existingBottom &&
+                    newBottom > existingPosition.top &&
+                    left < existingRight &&
+                    newRight > existingPosition.left
+                );
+            });
+        } while (isOverlapping);
+
+        if (!isOverlapping) {
+            setPositions(prev => [...prev, { top, left }]);
+            setVelocities(prev => [...prev, getRandomVelocity()]);
+            setColors(prev => [...prev, getRandomColor()]);
+        }
+        setInitialVelocities(prev => [...prev, getRandomVelocity()]);
+    };
+
+    const removeIcon = () => {
+        setPositions(prev => prev.slice(0, -1));
+        setVelocities(prev => prev.slice(0, -1));
+        setColors(prev => prev.slice(0, -1));
+        setInitialVelocities(prev => prev.slice(0, -1));
+    };
+
     const getDimensions = () => {
         setBorderCollisions(getBorderCollisions());
     };
@@ -313,20 +356,20 @@ export const useDimensions = (
         let leftSpeed = newVelocities[index].leftSpeed;
         let newColor = newColors[index];
 
-        if (newTop >= borderCollisions[index].vertical) {
+        if (newTop >= borderCollisions[index].bottom) {
             topSpeed = -topSpeed;
             newColor = getRandomColor();
-            newTop = borderCollisions[index].vertical;
+            newTop = borderCollisions[index].bottom;
         }
         if (newTop <= 0) {
             topSpeed = -topSpeed;
             newColor = getRandomColor();
             newTop = 0;
         }
-        if (newLeft >= borderCollisions[index].horizontal) {
+        if (newLeft >= borderCollisions[index].right) {
             leftSpeed = -leftSpeed;
             newColor = getRandomColor();
-            newLeft = borderCollisions[index].horizontal;
+            newLeft = borderCollisions[index].right;
         }
         if (newLeft <= 0) {
             leftSpeed = -leftSpeed;
@@ -400,21 +443,10 @@ export const useDimensions = (
 
     useEffect(() => {
         if (icons.length < colors.length) {
-            const newColors = [...colors];
-            const newPositions = [...positions];
-            const newVelocities = [...velocities];
-            const newBorderCollisions = [...borderCollisions];
-            const newInitialVelocities = [...initialVelocities];
-            newColors.splice(icons.length);
-            newVelocities.splice(icons.length);
-            newPositions.splice(icons.length);
-            newBorderCollisions.splice(icons.length);
-            newInitialVelocities.splice(icons.length);
-            setVelocities(newVelocities);
-            setPositions(newPositions);
-            setBorderCollisions(newBorderCollisions);
-            setInitialVelocities(newInitialVelocities);
-            setColors(newColors);
+            removeIcon();
+        }
+        if (icons.length > colors.length) {
+            addIcon();
         }
     }, [icons]);
 

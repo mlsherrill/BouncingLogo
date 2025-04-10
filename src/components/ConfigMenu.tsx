@@ -3,7 +3,8 @@ import React from 'react';
 interface Props {
     speedMultiplier: number;
     numberOfIcons: number;
-    setNumberOfIcons: React.Dispatch<React.SetStateAction<number>>;
+    addIcon: () => void;
+    removeIcon: () => void;
     setSpeedMultiplier: React.Dispatch<React.SetStateAction<number>>;
     setIsPaused: React.Dispatch<React.SetStateAction<boolean>>;
     setIsDebugVisible: React.Dispatch<React.SetStateAction<boolean>>;
@@ -12,7 +13,8 @@ interface Props {
 export const ConfigMenu = ({
     speedMultiplier,
     numberOfIcons,
-    setNumberOfIcons,
+    addIcon,
+    removeIcon,
     setSpeedMultiplier,
     setIsPaused,
     setIsDebugVisible,
@@ -20,8 +22,8 @@ export const ConfigMenu = ({
     return (
         <div className="config-menu">
             <h2>Icons: {numberOfIcons}</h2>
-            <button onClick={() => setNumberOfIcons(prev => prev + 1)}>Add</button>
-            <button onClick={() => setNumberOfIcons(prev => Math.max(prev - 1, 0))}>Remove</button>
+            <button onClick={addIcon}>Add</button>
+            <button onClick={removeIcon}>Remove</button>
             <h2>Speed: {speedMultiplier}</h2>
             <button onClick={() => setSpeedMultiplier(prev => prev - 0.5)}>-</button>
             <button onClick={() => setSpeedMultiplier(prev => prev + 0.5)}>+</button>

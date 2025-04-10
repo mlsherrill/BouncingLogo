@@ -28,6 +28,18 @@ function App() {
         isDebugVisible
     );
 
+    const addIcon = () => {
+        const newIcon = numberOfIcons % 2 === 0 ? TH_ICON : TP_ICON;
+        setSvgIcons(prev => [...prev, newIcon]);
+        setNumberOfIcons(prev => prev + 1);
+    };
+    const removeIcon = () => {
+        if (numberOfIcons > 1) {
+            setSvgIcons(prev => prev.slice(0, -1));
+            setNumberOfIcons(prev => prev - 1);
+        }
+    };
+
     return (
         <div className="App">
             <div
@@ -47,7 +59,8 @@ function App() {
                     <ConfigMenu
                         speedMultiplier={speedMultiplier}
                         numberOfIcons={numberOfIcons}
-                        setNumberOfIcons={setNumberOfIcons}
+                        addIcon={addIcon}
+                        removeIcon={removeIcon}
                         setSpeedMultiplier={setSpeedMultiplier}
                         setIsPaused={setIsPaused}
                         setIsDebugVisible={setIsDebugVisible}
@@ -56,7 +69,9 @@ function App() {
             </div>
             {svgIcons.map((icon, index) => {
                 const IconComponent = icon.component;
-
+                if (positions[index] === undefined) {
+                    return null;
+                }
                 return (
                     <IconComponent
                         key={index}
@@ -67,24 +82,18 @@ function App() {
                     />
                 );
             })}
-
-            {isDebugVisible && (
-                <Debug
-                    colors={colors}
-                    borderCollisions={borderCollisions}
-                    scaledWidths={svgIcons.map(icon => icon.width * icon.scale)}
-                    scaledHeights={svgIcons.map(icon => icon.height * icon.scale)}
-                    tops={positions.map(pos => pos.top)}
-                    lefts={positions.map(pos => pos.left)}
-                />
-            )}
-            {isDebugVisible && (
-                <>
-                    <button onClick={() => setIsPaused(prev => !prev)}>Pause</button>
-                    <button onClick={() => setShouldStopOnCollision(prev => !prev)}>Stop On Collision</button>
-                    <button onClick={moveLogos}>One Step</button>
-                </>
-            )}
+            <Debug
+                colors={colors}
+                borderCollisions={borderCollisions}
+                scaledWidths={svgIcons.map(icon => icon.width * icon.scale)}
+                scaledHeights={svgIcons.map(icon => icon.height * icon.scale)}
+                tops={positions.map(pos => pos.top)}
+                lefts={positions.map(pos => pos.left)}
+                isVisible={isDebugVisible}
+                setIsPaused={setIsPaused}
+                setShouldStopOnCollision={setShouldStopOnCollision}
+                advanceOneStep={moveLogos}
+            />
         </div>
     );
 }
