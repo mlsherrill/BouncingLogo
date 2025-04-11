@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useReducer, useRef, useState } from 'react';
 import './App.css';
 import { Debug } from './components/Debug';
 
@@ -13,6 +13,7 @@ function App() {
     const [speedMultiplier, setSpeedMultiplier] = useState(query.speed ? parseFloat(query.speed) : 1);
     const [numberOfIcons, setNumberOfIcons] = useState(query.number || query.n ? parseInt(query.number || query.n) : 1);
     const [isMenuVisible, setIsMenuVisible] = useState(false);
+    const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
 
     const [svgIcons, setSvgIcons] = useState(() => {
         const newSvgIcons = [];
@@ -24,8 +25,7 @@ function App() {
 
     const { colors, positions, borderCollisions, setIsPaused, moveLogos, setShouldStopOnCollision } = useDimensions(
         svgIcons,
-        speedMultiplier,
-        isDebugVisible
+        speedMultiplier
     );
 
     const addIcon = () => {
@@ -40,6 +40,15 @@ function App() {
         }
     };
 
+    const handleMouseLeave = () => {
+        if (hoverTimeout.current) {
+            clearTimeout(hoverTimeout.current);
+        }
+        hoverTimeout.current = setTimeout(() => {
+            setIsMenuVisible(false);
+        }, 1000);
+    };
+
     return (
         <div className="App">
             <div
@@ -48,12 +57,12 @@ function App() {
                     top: 0,
                     left: 0,
                     minWidth: '100px',
-                    minHeight: '100px',
+                    minHeight: '400px',
                     backgroundColor: isMenuVisible ? 'rgba(0, 0, 0, 0.5)' : 'transparent',
                     zIndex: 10,
                 }}
                 onMouseEnter={() => setIsMenuVisible(true)}
-                onMouseLeave={() => setTimeout(() => setIsMenuVisible(false), 2000)}
+                onMouseLeave={handleMouseLeave}
             >
                 {isMenuVisible && (
                     <ConfigMenu

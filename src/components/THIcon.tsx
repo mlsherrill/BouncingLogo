@@ -1,6 +1,7 @@
 import '../App.css';
 import { TH_ICON } from '../constants';
 import { Position } from '../types';
+import { IconDebug } from './IconDebug';
 
 interface Props {
     width?: number;
@@ -34,9 +35,7 @@ export const THIcon = ({ color, position, debug = false, index = 0 }: Props) => 
                 fill={color}
             />
             {debug && (
-                <text x="15%" y="15%" textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="12">
-                    {index}
-                </text>
+                <IconDebug index={index} position={position} scaledHeight={scaledHeight} scaledWidth={scaledWidth} />
             )}
         </svg>
     );

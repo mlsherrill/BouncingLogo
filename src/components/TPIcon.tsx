@@ -28,9 +28,12 @@ export const TPIcon = ({ color, position, debug = false, index = 0 }: Props) => 
             viewBox="0 0 25 24"
         >
             {debug && (
-                <text x="15%" y="15%" textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="6">
-                    {index}
-                </text>
+                <>
+                    <text x="15%" y="15%" textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="6">
+                        {index}
+                    </text>
+                    <text x="15%" y="50%">{position.top}</text>
+                </>
             )}
             <path
                 fillRule="evenodd"

@@ -57,12 +57,9 @@ type CollisionLog = {
 
 const DEFAULT_TOP_SPEED = 1;
 const DEFAULT_LEFT_SPEED = 2;
+const DEFAULT_SPEED_MULTIPLIER = 1;
 
-export const useDimensions = (
-    icons: { width: number; height: number; scale: number }[],
-    speedMultiplier: number,
-    debug: boolean = false
-) => {
+export const useDimensions = (icons: { width: number; height: number; scale: number }[], speedMultiplier: number) => {
     const [frameCount, setFrameCount] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
     const [shouldStopOnCollision, setShouldStopOnCollision] = useState(false);
@@ -155,9 +152,9 @@ export const useDimensions = (
         return positions;
     });
 
-    const getRandomVelocity = () => {
-        const availableTopSpeeds = [-DEFAULT_TOP_SPEED * speedMultiplier, DEFAULT_TOP_SPEED * speedMultiplier];
-        const availableLeftSpeeds = [-DEFAULT_LEFT_SPEED * speedMultiplier, DEFAULT_LEFT_SPEED * speedMultiplier];
+    const getRandomVelocity = (multiplier: number) => {
+        const availableTopSpeeds = [-DEFAULT_TOP_SPEED * multiplier, DEFAULT_TOP_SPEED * multiplier];
+        const availableLeftSpeeds = [-DEFAULT_LEFT_SPEED * multiplier, DEFAULT_LEFT_SPEED * multiplier];
         const topSpeedIndex = Math.floor(Math.random() * availableTopSpeeds.length);
         const leftSpeedIndex = Math.floor(Math.random() * availableLeftSpeeds.length);
         return {
@@ -167,13 +164,18 @@ export const useDimensions = (
     };
 
     const [velocities, setVelocities] = useState(() => {
-        const velocities: Velocity[] = [];
+        const initialVelocities: Velocity[] = [];
         for (let i = 0; i < icons.length; i++) {
-            velocities.push(getRandomVelocity());
+            initialVelocities.push(getRandomVelocity(DEFAULT_SPEED_MULTIPLIER));
         }
+        setInitialVelocities(initialVelocities);
 
-        setInitialVelocities(velocities);
-        return velocities;
+        const newVelocities: Velocity[] = initialVelocities.map(velocity => ({
+            topSpeed: velocity.topSpeed * speedMultiplier,
+            leftSpeed: velocity.leftSpeed * speedMultiplier,
+        }));
+
+        return newVelocities;
     });
 
     const addIcon = () => {
@@ -205,10 +207,17 @@ export const useDimensions = (
 
         if (!isOverlapping) {
             setPositions(prev => [...prev, { top, left }]);
-            setVelocities(prev => [...prev, getRandomVelocity()]);
+            const initialVelocity = getRandomVelocity(DEFAULT_SPEED_MULTIPLIER);
+            setInitialVelocities(prev => [...prev, initialVelocity]);
+            setVelocities(prev => [
+                ...prev,
+                {
+                    topSpeed: initialVelocity.topSpeed * speedMultiplier,
+                    leftSpeed: initialVelocity.leftSpeed * speedMultiplier,
+                },
+            ]);
             setColors(prev => [...prev, getRandomColor()]);
         }
-        setInitialVelocities(prev => [...prev, getRandomVelocity()]);
     };
 
     const removeIcon = () => {
@@ -407,19 +416,26 @@ export const useDimensions = (
     }, [isPaused, moveLogos]);
 
     useEffect(() => {
-        console.log('Speed multiplier updated:', speedMultiplier);
         setVelocities(() => {
             const newVelocities: Velocity[] = [];
 
             for (let i = 0; i < icons.length; i++) {
+                console.log('speedMultiplier', speedMultiplier);
+                console.log('initialVelocity', initialVelocities[i]);
+                console.log('current Velocity', velocities[i]);
+
                 const { topSpeed: initialTopSpeed, leftSpeed: initialLeftSpeed } = initialVelocities[i];
-                const newTopSpeed = Math.abs(initialTopSpeed * speedMultiplier) * Math.sign(velocities[i].topSpeed);
-                const newLeftSpeed = Math.abs(initialLeftSpeed * speedMultiplier) * Math.sign(velocities[i].leftSpeed);
+                const topSign = velocities[i].topSpeed >= 0 && !Object.is(velocities[i].topSpeed, -0) ? 1 : -1;
+                const leftSign = velocities[i].leftSpeed >= 0 && !Object.is(velocities[i].leftSpeed, -0) ? 1 : -1;
+                const newTopSpeed = Math.abs(initialTopSpeed * speedMultiplier) * topSign;
+                const newLeftSpeed = Math.abs(initialLeftSpeed * speedMultiplier) * leftSign;
 
                 newVelocities.push({
                     topSpeed: newTopSpeed,
                     leftSpeed: newLeftSpeed,
                 });
+                console.log('newTopSpeed', newTopSpeed);
+                console.log('newLeftSpeed', newLeftSpeed);
             }
             return newVelocities;
         });

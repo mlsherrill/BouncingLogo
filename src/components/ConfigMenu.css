@@ -1,0 +1,15 @@
+.config-menu {
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+button {
+    margin: 5px;
+    padding: 10px;
+    min-width: 50px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}

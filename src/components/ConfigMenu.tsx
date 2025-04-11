@@ -1,4 +1,5 @@
 import React from 'react';
+import './ConfigMenu.css';
 
 interface Props {
     speedMultiplier: number;
@@ -19,14 +20,25 @@ export const ConfigMenu = ({
     setIsPaused,
     setIsDebugVisible,
 }: Props) => {
+    const handleSpeedDecrease = () => {
+        if (speedMultiplier <= 0) {
+            return;
+        }
+        if (speedMultiplier - 0.5 < 0) {
+            setSpeedMultiplier(0);
+            return;
+        }
+        setSpeedMultiplier(prev => prev - 0.5);
+    };
+
     return (
         <div className="config-menu">
             <h2>Icons: {numberOfIcons}</h2>
-            <button onClick={addIcon}>Add</button>
             <button onClick={removeIcon}>Remove</button>
+            <button onClick={addIcon}>Add</button>
             <h2>Speed: {speedMultiplier}</h2>
-            <button onClick={() => setSpeedMultiplier(prev => prev - 0.5)}>-</button>
-            <button onClick={() => setSpeedMultiplier(prev => prev + 0.5)}>+</button>
+            <button onClick={handleSpeedDecrease}>Slower</button>
+            <button onClick={() => setSpeedMultiplier(prev => prev + 0.5)}>Faster</button>
             <h2>Pause</h2>
             <button onClick={() => setIsPaused(prev => !prev)}>Toggle</button>
             <h2>Debug</h2>
